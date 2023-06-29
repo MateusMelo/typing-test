@@ -15,17 +15,29 @@ export default function Home() {
     { word: "cada", classes: ["word"] },
     { word: "nem", classes: ["word"] }
   ])
-  // const [currentWord, setCurrentWord] = useState<string>(words[0])
-  // const [typedWord, setTypedWord] = useState<string>("")
-  // let pointer = 0;
+  const [typedWord, setTypedWord] = useState<string>("")
+  const [pointer, setPointer] = useState<number>(0)
 
   function handleKeyUp(e: KeyboardEvent<HTMLInputElement>) {
-    // if (e.key === " " || currentWord === typedWord) {
-    //   setCurrentWord(words[++pointer]);
-    //   setTypedWord("");
-    // } else {
-    //   setTypedWord(e.key);
-    // }
+    const currentWord: Word = words[pointer];
+    const nextWord: Word = words[pointer + 1];
+    if (e.key === " " || currentWord.word === typedWord) {
+      const filteredWords: Word[] = words.filter((word: Word) => word.word !== currentWord.word && word.word !== nextWord.word);
+      const nextWords: Word[] = [
+        ...filteredWords.slice(0, pointer),
+        { word: currentWord.word, classes: currentWord.classes.filter(c => c !== 'current') },
+        { word: nextWord.word, classes: ["word", "current"] },
+        ...filteredWords.slice(pointer),
+      ];
+      setWords(nextWords);
+      setPointer(pointer + 1);
+
+      words[pointer].classes.push("current");
+
+      setTypedWord("");
+    } else {
+      setTypedWord(`${typedWord}${e.key}`);
+    }
   }
 
   function applyClasses(classes: Array<string>): string {
