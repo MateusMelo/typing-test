@@ -3,52 +3,64 @@
 import { KeyboardEvent, useState } from 'react';
 import styles from './page.module.css'
 
-interface Word {
-  word: string,
-  classes: Array<string>
+const KEYS = {
+  BACKSPACE: "Backspace",
+  SPACE: " ",
 }
 
+const misses: number[] = [];
+const hits: number[] = [];
+
 export default function Home() {
-  const [words, setWords] = useState<Word[]>([
-    { word: "em", classes: ["word", "current"] },
-    { word: "termo", classes: ["word"] },
-    { word: "cada", classes: ["word"] },
-    { word: "nem", classes: ["word"] }
+  const [words, setWords] = useState<string[]>([
+    "in",
+    "term",
+    "each",
+    "no",
+    "some",
+    "another",
+    "word"
   ])
   const [typedWord, setTypedWord] = useState<string>("")
   const [pointer, setPointer] = useState<number>(0)
 
   function handleKeyUp(e: KeyboardEvent<HTMLInputElement>) {
-    const currentWord: Word = words[pointer];
-    const nextWord: Word = words[pointer + 1];
-    if (e.key === " " || currentWord.word === typedWord) {
-      const filteredWords: Word[] = words.filter((word: Word) => word.word !== currentWord.word && word.word !== nextWord.word);
-      const nextWords: Word[] = [
-        ...filteredWords.slice(0, pointer),
-        { word: currentWord.word, classes: currentWord.classes.filter(c => c !== 'current') },
-        { word: nextWord.word, classes: ["word", "current"] },
-        ...filteredWords.slice(pointer),
-      ];
-      setWords(nextWords);
+    const currentWord: string = words[pointer];
+    if (e.key === KEYS.SPACE) {
+      if (currentWord === typedWord) {
+        console.log("Hit");
+        hits.push(pointer);
+      } else {
+        misses.push(pointer);
+        console.log("Miss");
+      }
       setPointer(pointer + 1);
-
-      words[pointer].classes.push("current");
-
       setTypedWord("");
+    } else if (e.key === KEYS.BACKSPACE) {
     } else {
       setTypedWord(`${typedWord}${e.key}`);
     }
   }
 
-  function applyClasses(classes: Array<string>): string {
-    return classes.reduce((acc, curr) => `${acc} ${styles[curr]}`, "");
+  function loadClassesFromIndex(index: number): string {
+    if (pointer === index) {
+      return styles.current;
+    }
+    if (misses.indexOf(index) !== -1) {
+      return styles.danger;
+    }
+    if (hits.indexOf(index) !== -1) {
+      return styles.success;
+    }
+
+    return ''
   }
 
   return (
     <main>
       <div>
-        {words.map(({ word, classes }, i) => (
-          <span className={applyClasses(classes)} key={i}>{word}</span>
+        {words.map((word, index) => (
+          <span className={`${styles.word} ${loadClassesFromIndex(index)}`} key={index}>{word}</span>
         ))}</div>
       <div>
         <input onKeyUp={handleKeyUp} type="text" />
