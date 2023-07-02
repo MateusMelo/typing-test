@@ -26,7 +26,12 @@ export default function Home() {
 
   function handleKeyUp(e: KeyboardEvent<HTMLInputElement>) {
     const currentWord: string = words[pointer];
-    if (e.key === KEYS.SPACE) {
+    if (!currentWord) {
+      console.log("Finished");
+      return;
+    }
+
+    if (e.key === KEYS.SPACE && typedWord.length > 0) {
       if (currentWord === typedWord) {
         console.log("Hit");
         hits.push(pointer);
@@ -36,9 +41,6 @@ export default function Home() {
       }
       setPointer(pointer + 1);
       setTypedWord("");
-    } else if (e.key === KEYS.BACKSPACE) {
-    } else {
-      setTypedWord(`${typedWord}${e.key}`);
     }
   }
 
@@ -63,7 +65,7 @@ export default function Home() {
           <span className={`${styles.word} ${loadClassesFromIndex(index)}`} key={index}>{word}</span>
         ))}</div>
       <div>
-        <input onKeyUp={handleKeyUp} type="text" />
+        <input onKeyUp={handleKeyUp} value={typedWord} onChange={(e) => { setTypedWord(e.target.value.trim()) }} type="text" />
       </div>
     </main>
   )
