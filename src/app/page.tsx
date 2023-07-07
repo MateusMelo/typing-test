@@ -1,6 +1,6 @@
 'use client'
 
-import { KeyboardEvent, useState } from 'react'
+import { KeyboardEvent, useEffect, useState } from 'react'
 import styles from './page.module.css'
 
 type Status = 'Hit' | 'Miss'
@@ -27,8 +27,10 @@ export default function Home() {
     'another',
     'word'
   ])
-  const [typedWord, setTypedWord] = useState<string>("")
+  const [typedWord, setTypedWord] = useState<string>('')
   const [currentIndex, setCurrentIndex] = useState<number>(0)
+  const [seconds, setSeconds] = useState<number>(60);
+  const [startedTyping, setStartedTyping] = useState<boolean>(false);
 
   function handleKeyUp(e: KeyboardEvent<HTMLInputElement>) {
     const currentWord: string = words[currentIndex]
@@ -36,8 +38,9 @@ export default function Home() {
       console.log('Finished')
       return
     }
-
-    if (e.key === KEYS_MAP.SPACE && typedWord.length > 0) {
+    if (!typedWord.length) return
+    if (!startedTyping) setStartedTyping(true)
+    if (e.key === KEYS_MAP.SPACE) {
       history[currentIndex] = currentWord === typedWord ? 'Hit' : 'Miss'
 
       setCurrentIndex(currentIndex + 1)
@@ -54,6 +57,18 @@ export default function Home() {
     return ''
   }
 
+  useEffect(() => {
+    let interval: NodeJS.Timer
+    if (startedTyping) {
+      interval = setInterval(() => setSeconds(seconds => seconds - 1), 1000);
+
+      if (seconds <= 0) {
+        clearInterval(interval);
+      }
+    }
+    return () => clearInterval(interval);
+  }, [seconds, startedTyping])
+
   return (
     <main>
       <div>
@@ -69,6 +84,9 @@ export default function Home() {
         <div>
           <input onKeyUp={handleKeyUp} value={typedWord} onChange={(e) => { setTypedWord(e.target.value.trim()) }} type="text" />
         </div>
+      </div>
+      <div>
+        Timer: {seconds}
       </div>
     </main>
   )
