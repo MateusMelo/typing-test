@@ -1,71 +1,74 @@
 'use client'
 
-import { KeyboardEvent, useState } from 'react';
+import { KeyboardEvent, useState } from 'react'
 import styles from './page.module.css'
 
-const KEYS = {
-  BACKSPACE: "Backspace",
-  SPACE: " ",
+type Status = 'Hit' | 'Miss'
+type History = {
+  [key: number]: Status
+}
+type Keys = {
+  [key: string]: string
 }
 
-const misses: number[] = [];
-const hits: number[] = [];
+const history: History = {}
+const KEYS_MAP: Keys = {
+  BACKSPACE: 'Backspace',
+  SPACE: ' ',
+}
 
 export default function Home() {
   const [words, setWords] = useState<string[]>([
-    "in",
-    "term",
-    "each",
-    "no",
-    "some",
-    "another",
-    "word"
+    'in',
+    'term',
+    'each',
+    'no',
+    'some',
+    'another',
+    'word'
   ])
   const [typedWord, setTypedWord] = useState<string>("")
-  const [pointer, setPointer] = useState<number>(0)
+  const [currentIndex, setCurrentIndex] = useState<number>(0)
 
   function handleKeyUp(e: KeyboardEvent<HTMLInputElement>) {
-    const currentWord: string = words[pointer];
+    const currentWord: string = words[currentIndex]
     if (!currentWord) {
-      console.log("Finished");
-      return;
+      console.log('Finished')
+      return
     }
 
-    if (e.key === KEYS.SPACE && typedWord.length > 0) {
-      if (currentWord === typedWord) {
-        console.log("Hit");
-        hits.push(pointer);
-      } else {
-        misses.push(pointer);
-        console.log("Miss");
-      }
-      setPointer(pointer + 1);
-      setTypedWord("");
+    if (e.key === KEYS_MAP.SPACE && typedWord.length > 0) {
+      history[currentIndex] = currentWord === typedWord ? 'Hit' : 'Miss'
+
+      setCurrentIndex(currentIndex + 1)
+      setTypedWord('')
     }
   }
 
-  function loadClassesFromIndex(index: number): string {
-    if (pointer === index) {
-      return styles.current;
+  function loadClassesFromWordIndex(index: number): string {
+    if (currentIndex === index) return styles.current
+    if (index in history) {
+      if (history[index] === 'Hit') return styles.success
+      if (history[index] === 'Miss') return styles.danger
     }
-    if (misses.indexOf(index) !== -1) {
-      return styles.danger;
-    }
-    if (hits.indexOf(index) !== -1) {
-      return styles.success;
-    }
-
     return ''
   }
 
   return (
     <main>
       <div>
-        {words.map((word, index) => (
-          <span className={`${styles.word} ${loadClassesFromIndex(index)}`} key={index}>{word}</span>
-        ))}</div>
-      <div>
-        <input onKeyUp={handleKeyUp} value={typedWord} onChange={(e) => { setTypedWord(e.target.value.trim()) }} type="text" />
+        <div>
+          {
+            words.map(
+              (word, index) => (
+                <span className={`${styles.word} ${loadClassesFromWordIndex(index)}`} key={index}>{word}</span>
+              )
+            )
+          }
+        </div>
+        <div>
+          <input onKeyUp={handleKeyUp} value={typedWord} onChange={(e) => { setTypedWord(e.target.value.trim()) }} type="text" />
+        </div>
       </div>
     </main>
   )
