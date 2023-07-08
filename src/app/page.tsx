@@ -10,8 +10,6 @@ type History = {
 type Keys = {
   [key: string]: string
 }
-
-const history: History = {}
 const KEYS_MAP: Keys = {
   BACKSPACE: 'Backspace',
   SPACE: ' ',
@@ -27,6 +25,7 @@ export default function Home() {
     'another',
     'word'
   ])
+  const [history, setHistory] = useState<History>({})
   const [typedWord, setTypedWord] = useState<string>('')
   const [currentIndex, setCurrentIndex] = useState<number>(0)
   const [seconds, setSeconds] = useState<number>(60);
@@ -46,6 +45,14 @@ export default function Home() {
       setCurrentIndex(currentIndex + 1)
       setTypedWord('')
     }
+  }
+
+  function reset() {
+    setTypedWord('')
+    setCurrentIndex(0)
+    setSeconds(60)
+    setStartedTyping(false)
+    setHistory({})
   }
 
   function loadClassesFromWordIndex(index: number): string {
@@ -87,6 +94,9 @@ export default function Home() {
       </div>
       <div>
         Timer: {seconds}
+      </div>
+      <div>
+        <button type="button" onClick={reset}>Reset</button>
       </div>
     </main>
   )
