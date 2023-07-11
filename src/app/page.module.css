@@ -1,18 +1,35 @@
-.word {
-    padding: 3px;
+.text {
+    font-size: 3rem;
+}
+
+.letter {
+    margin: 1px;
 }
 
 .current {
-    background-color: grey;
-    color: white;
+    color: #00aaff;
+    text-decoration: underline;
 }
 
-.danger {
-    background-color: red;
-    color: white;
+.miss {
+    background-color: rgb(243, 186, 186);
+    color: rgb(148, 58, 58);
 }
 
-.success {
-    background-color: green;
-    color: white;
+.hit {
+    background-color: rgb(186, 243, 186);
+    color: rgb(58, 148, 58);
+}
+
+.input {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 0;
+    opacity: 0;
+    z-index: 0;
+    border: none;
+    color: transparent;
+    caret-color: rgb(0, 0, 0);
 }

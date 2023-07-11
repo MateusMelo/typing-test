@@ -1,95 +1,104 @@
 'use client'
 
-import { KeyboardEvent, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import styles from './page.module.css'
 
-type Status = 'Hit' | 'Miss'
-type History = {
-  [key: number]: Status
-}
 type Keys = {
   [key: string]: string
 }
 const KEYS_MAP: Keys = {
   BACKSPACE: 'Backspace',
-  SPACE: ' ',
 }
+const COUNTDOWN_SECONDS = 60
 
 export default function Home() {
-  const [words, setWords] = useState<string[]>([
-    'in',
-    'term',
-    'each',
-    'no',
-    'some',
-    'another',
-    'word'
-  ])
-  const [history, setHistory] = useState<History>({})
-  const [typedWord, setTypedWord] = useState<string>('')
+  const [text, setText] = useState<string>('In term each no some another word')
+  const [typedText, setTypedText] = useState<string>('')
   const [currentIndex, setCurrentIndex] = useState<number>(0)
-  const [seconds, setSeconds] = useState<number>(60);
+  const [seconds, setSeconds] = useState<number>(COUNTDOWN_SECONDS);
   const [startedTyping, setStartedTyping] = useState<boolean>(false);
-
-  function handleKeyUp(e: KeyboardEvent<HTMLInputElement>) {
-    const currentWord: string = words[currentIndex]
-    if (!currentWord) {
-      console.log('Finished')
-      return
-    }
-    if (!typedWord.length) return
-    if (!startedTyping) setStartedTyping(true)
-    if (e.key === KEYS_MAP.SPACE) {
-      history[currentIndex] = currentWord === typedWord ? 'Hit' : 'Miss'
-
-      setCurrentIndex(currentIndex + 1)
-      setTypedWord('')
-    }
-  }
+  const [finished, setFinished] = useState<boolean>(false);
+  const [hits, setHits] = useState<number[]>([])
+  const [misses, setMisses] = useState<number[]>([])
+  const [precision, setPrecision] = useState<number>(0)
 
   function reset() {
-    setTypedWord('')
-    setCurrentIndex(0)
-    setSeconds(60)
-    setStartedTyping(false)
-    setHistory({})
+    // setTypedWord('')
+    // setCurrentIndex(0)
+    // setSeconds(COUNTDOWN_SECONDS)
+    // setStartedTyping(false)
+    // setFinished(false)
+    // setHistory([])
   }
 
-  function loadClassesFromWordIndex(index: number): string {
-    if (currentIndex === index) return styles.current
-    if (index in history) {
-      if (history[index] === 'Hit') return styles.success
-      if (history[index] === 'Miss') return styles.danger
-    }
-    return ''
+  function loadLetterClasses(index: number): string {
+    if (currentIndex === index) return `${styles.letter} ${styles.current}`
+    if (hits.indexOf(index) !== -1) return `${styles.letter} ${styles.hit}`
+    if (misses.indexOf(index) !== -1) return `${styles.letter} ${styles.miss}`
+    return styles.letter
   }
+
+  const showResults = useCallback(() => {
+    console.log('Finished');
+    console.log(hits, misses, precision)
+  }, [hits, misses, precision])
 
   useEffect(() => {
-    let interval: NodeJS.Timer
-    if (startedTyping) {
-      interval = setInterval(() => setSeconds(seconds => seconds - 1), 1000);
-
-      if (seconds <= 0) {
-        clearInterval(interval);
+    const onKeyUp = (e: globalThis.KeyboardEvent) => {
+      if (e.key === KEYS_MAP.BACKSPACE) {
+        setCurrentIndex(currentIndex - 1)
+        setHits(hits => hits.filter(value => value !== currentIndex))
+        setMisses(misses => misses.filter(value => value !== currentIndex))
+        return
       }
     }
-    return () => clearInterval(interval);
-  }, [seconds, startedTyping])
+    const onKeyPress = (e: globalThis.KeyboardEvent) => {
+      setTypedText(typedText => `${typedText}${e.key}`)
+
+      if (e.key === text[currentIndex]) {
+        setHits(hits => [...hits, currentIndex])
+      } else {
+        setMisses(misses => [...misses, currentIndex])
+      }
+
+      setCurrentIndex(currentIndex + 1)
+
+      if ((typedText.length + 1) === text.length) console.log('reached the end')
+    }
+
+    window.addEventListener('keypress', onKeyPress)
+    window.addEventListener('keydown', onKeyUp)
+    return () => {
+      window.removeEventListener('keypress', onKeyPress)
+      window.removeEventListener('keydown', onKeyUp)
+    }
+  }, [text, typedText, currentIndex])
+  // useEffect(() => {
+  //   let interval: NodeJS.Timer
+  //   if (startedTyping) {
+  //     interval = setInterval(() => setSeconds(seconds => seconds - 1), 1000);
+
+  //     if (finished) clearInterval(interval)
+  //     if (seconds <= 0) {
+  //       clearInterval(interval)
+  //       setFinished(true)
+  //       showResults()
+  //     }
+  //   }
+  //   return () => clearInterval(interval);
+  // }, [seconds, startedTyping, history, words, finished, showResults])
 
   return (
     <main>
       <div>
-        <div>
+        <div className={styles.text}>
           {
-            words.map(
-              (word, index) => (
-                <span className={`${styles.word} ${loadClassesFromWordIndex(index)}`} key={index}>{word}</span>
+            Array.from(text).map(
+              (letter, index) => (
+                <span className={loadLetterClasses(index)} key={index}>{letter}</span>
               )
             )
           }
-        </div>
-        <div>
-          <input onKeyUp={handleKeyUp} value={typedWord} onChange={(e) => { setTypedWord(e.target.value.trim()) }} type="text" />
         </div>
       </div>
       <div>
