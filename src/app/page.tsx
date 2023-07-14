@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import styles from './page.module.css'
 
 type Keys = {
@@ -8,27 +8,28 @@ type Keys = {
 }
 const KEYS_MAP: Keys = {
   BACKSPACE: 'Backspace',
+  SHIFT: 'Shift',
+  CONTROL: 'Control'
 }
 const COUNTDOWN_SECONDS = 60
 
 export default function Home() {
-  const [text, setText] = useState<string>('In term each no some another word')
+  const [text, setText] = useState<string>('Without branch prediction')
   const [typedText, setTypedText] = useState<string>('')
   const [currentIndex, setCurrentIndex] = useState<number>(0)
   const [seconds, setSeconds] = useState<number>(COUNTDOWN_SECONDS);
-  const [startedTyping, setStartedTyping] = useState<boolean>(false);
   const [finished, setFinished] = useState<boolean>(false);
   const [hits, setHits] = useState<number[]>([])
   const [misses, setMisses] = useState<number[]>([])
   const [precision, setPrecision] = useState<number>(0)
 
   function reset() {
-    // setTypedWord('')
-    // setCurrentIndex(0)
-    // setSeconds(COUNTDOWN_SECONDS)
-    // setStartedTyping(false)
-    // setFinished(false)
-    // setHistory([])
+    setTypedText('')
+    setCurrentIndex(0)
+    setSeconds(COUNTDOWN_SECONDS)
+    setFinished(false)
+    setHits([])
+    setMisses([])
   }
 
   function loadLetterClasses(index: number): string {
@@ -38,41 +39,38 @@ export default function Home() {
     return styles.letter
   }
 
-  const showResults = useCallback(() => {
-    console.log('Finished');
-    console.log(hits, misses, precision)
-  }, [hits, misses, precision])
-
   useEffect(() => {
-    const onKeyUp = (e: globalThis.KeyboardEvent) => {
+    const onKeyDown = (e: globalThis.KeyboardEvent) => {
+      if (finished) return
       if (e.key === KEYS_MAP.BACKSPACE) {
         setCurrentIndex(currentIndex - 1)
+        setTypedText(typedText => typedText.substring(0, typedText.length - 1))
         setHits(hits => hits.filter(value => value !== currentIndex))
         setMisses(misses => misses.filter(value => value !== currentIndex))
         return
       }
-    }
-    const onKeyPress = (e: globalThis.KeyboardEvent) => {
-      setTypedText(typedText => `${typedText}${e.key}`)
+      if (!(e.key === KEYS_MAP.SHIFT || e.key === KEYS_MAP.CONTROL)) {
+        e.key === text[currentIndex]
+          ? setHits(hits => ([...hits, currentIndex]))
+          : setMisses(misses => ([...misses, currentIndex]))
 
-      if (e.key === text[currentIndex]) {
-        setHits(hits => [...hits, currentIndex])
-      } else {
-        setMisses(misses => [...misses, currentIndex])
+        const concatTypedText = `${typedText}${e.key}`
+        if (concatTypedText.length >= text.length) setFinished(true)
+
+        setCurrentIndex(currentIndex + 1)
+        setTypedText(concatTypedText)
       }
-
-      setCurrentIndex(currentIndex + 1)
-
-      if ((typedText.length + 1) === text.length) console.log('reached the end')
     }
 
-    window.addEventListener('keypress', onKeyPress)
-    window.addEventListener('keydown', onKeyUp)
-    return () => {
-      window.removeEventListener('keypress', onKeyPress)
-      window.removeEventListener('keydown', onKeyUp)
-    }
-  }, [text, typedText, currentIndex])
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [text, typedText, currentIndex, hits, finished])
+
+  if (finished) {
+    console.log(`Speed: ${typedText.split(" ").length}ppm`)
+    console.log(`Precision: ${(hits.length / text.length * 100)}`)
+  }
+
   // useEffect(() => {
   //   let interval: NodeJS.Timer
   //   if (startedTyping) {
