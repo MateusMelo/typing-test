@@ -9,9 +9,13 @@ type Keys = {
 const KEYS_MAP: Keys = {
   BACKSPACE: 'Backspace',
   SHIFT: 'Shift',
-  CONTROL: 'Control'
+  CONTROL: 'Control',
+  META: 'Meta',
+  CAPS_LOCK: 'CapsLock',
+  ESCAPE: 'Escape'
 }
 const COUNTDOWN_SECONDS = 60
+
 
 export default function Home() {
   const [text, setText] = useState<string>('Without branch prediction')
@@ -22,6 +26,7 @@ export default function Home() {
   const [hits, setHits] = useState<number[]>([])
   const [misses, setMisses] = useState<number[]>([])
   const [precision, setPrecision] = useState<number>(0)
+  const [consecutiveMisses, setConsecutiveMisses] = useState<number>(0)
 
   function reset() {
     setTypedText('')
@@ -49,10 +54,25 @@ export default function Home() {
         setMisses(misses => misses.filter(value => value !== currentIndex))
         return
       }
-      if (!(e.key === KEYS_MAP.SHIFT || e.key === KEYS_MAP.CONTROL)) {
-        e.key === text[currentIndex]
-          ? setHits(hits => ([...hits, currentIndex]))
-          : setMisses(misses => ([...misses, currentIndex]))
+
+      if (
+        !(e.key === KEYS_MAP.SHIFT
+          || e.key === KEYS_MAP.CONTROL
+          || e.key === KEYS_MAP.META
+          || e.key === KEYS_MAP.CAPS_LOCK
+          || e.key === KEYS_MAP.ESCAPE
+        )) {
+
+        if (e.key === text[currentIndex]) {
+          setHits(hits => ([...hits, currentIndex]))
+          setConsecutiveMisses(0)
+        } else {
+
+          if (consecutiveMisses > 1) return
+
+          setMisses(misses => ([...misses, currentIndex]))
+          setConsecutiveMisses(consecutiveMisses => consecutiveMisses + 1)
+        }
 
         const concatTypedText = `${typedText}${e.key}`
         if (concatTypedText.length >= text.length) setFinished(true)
@@ -64,7 +84,7 @@ export default function Home() {
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [text, typedText, currentIndex, hits, finished])
+  }, [text, typedText, currentIndex, hits, finished, consecutiveMisses])
 
   if (finished) {
     console.log(`Speed: ${typedText.split(" ").length}ppm`)
